@@ -1,4 +1,3 @@
-
 use bson::Document;
 use chrono::{TimeZone, Utc};
 use mongodb::bson::doc;
