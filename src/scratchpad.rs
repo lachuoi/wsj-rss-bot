@@ -26,7 +26,7 @@ pub async fn write_title(title: String) -> Result<(), Box<dyn Error>> {
     let new_doc = doc! {
         "_app_" : env::current_exe().unwrap().file_name().unwrap().to_str(),
         "title": title,
-        "creationd_at": chrono::Utc::now(),
+        "created_at": chrono::Utc::now(),
     };
     let item = client.database("scratchpad").collection("scratchpad");
     let insert_result = item.insert_one(new_doc.clone(), None).await?;
@@ -36,7 +36,7 @@ pub async fn write_title(title: String) -> Result<(), Box<dyn Error>> {
 
 pub async fn new_title(title: String) -> Result<bool, Box<dyn Error>> {
     let client: Client = connect().await?;
-    let item: Collection<Document> = client.database("feeds").collection("wsj");
+    let item: Collection<Document> = client.database("scratchpad").collection("scratchpad");
     let a = item.count_documents(doc! {
         "_app_" : env::current_exe().unwrap().file_name().unwrap().to_str(),
         "title" : title}, None).await?;
