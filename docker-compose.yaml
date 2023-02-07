@@ -1,0 +1,7 @@
+version: "3"
+services:
+  mastodon-newspenguin-bot:
+    container_name: "mastodon-wsj-bot"
+    image: "mastodon-wsj-bot"
+    env_file: .env
+    restart: always

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+		<rss xmlns:wsj="http://dowjones.net/rss/" xmlns:dj="http://dowjones.net/rss/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+<channel>
+<title>WSJ.com: Markets</title>
+<link>http://online.wsj.com</link>
+<atom:link type="application/rss+xml" rel="self" href="http://online.wsj.com"/>
+<description>Markets</description>
+<language>en-us</language>
+<pubDate>Sat, 04 Feb 2023 00:02:13 -0500</pubDate>
+<lastBuildDate>Sat, 04 Feb 2023 00:02:13 -0500</lastBuildDate>
+<copyright>Dow Jones &amp; Company, Inc.</copyright>
+<generator>http://online.wsj.com</generator>
+<docs>http://cyber.law.harvard.edu/rss/rss.html</docs>
+<image>
+<title>WSJ.com: Markets</title>
+<link>http://online.wsj.com</link>
+<url>http://online.wsj.com/img/wsj_sm_logo.gif</url>
+</image>
+<item>
+<title>The Retreat of the Amateur Investors</title>
+<link>https://www.wsj.com/articles/the-retreat-of-the-amateur-investors-11675486817?mod=rss_markets_main</link>
+<description><![CDATA[A pandemic boom attracted scores of Americans seeking gains. Now that some are backing away, the markets risk losing a key support.]]></description>
+<content:encoded/>
+<pubDate>Sat, 04 Feb 2023 00:00:00 -0500</pubDate>
+<guid isPermaLink="false">SB11564969159971183592504589419450087039802</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Markets Main</wsj:articletype>
+</item>
+<item>
+<title>Follow the Heard on the Street Picks</title>
+<link>https://www.wsj.com/articles/the-wsj-stock-picking-contest-11660249192?mod=rss_markets_main</link>
+<description><![CDATA[See the best ideas from our columnists as they compete to find the winning stock.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 22:08:00 -0500</pubDate>
+<guid isPermaLink="false">SB12231247603205373499204589064261254546356</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Heard on the Street</wsj:articletype>
+</item>
+<item>
+<title>Bank of America Cut CEO Brian Moynihan's Pay 6% in 2022</title>
+<link>https://www.wsj.com/articles/bank-of-america-cut-ceo-brian-moynihans-pay-6-in-2022-11675462048?mod=rss_markets_main</link>
+<description><![CDATA[The bank’s leader earned $30 million for the year, including base salary of $1.5 million.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 17:07:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000552086</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Markets Main</wsj:articletype>
+</item>
+<item>
+<title>Stocks Slip After January Jobs Report</title>
+<link>https://www.wsj.com/articles/global-stocks-markets-dow-update-02-03-2023-11675425093?mod=rss_markets_main</link>
+<description><![CDATA[Markets ended the week on a downcast note after disappointing results from Apple, Amazon and Alphabet.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 16:59:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000549244</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Today's Markets</wsj:articletype>
+</item>
+<item>
+<title>Nordstrom Gets the Diamond-Hands Treatment</title>
+<link>https://www.wsj.com/articles/nordstrom-gets-the-diamond-hands-treatment-11675450397?mod=rss_markets_main</link>
+<description><![CDATA[Ryan Cohen’s appearance sent the department store chain’s shares surging briefly, but the meme-stock king’s aura and influence aren’t what they used to be.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 13:53:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000551221</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Heard on the Street</wsj:articletype>
+</item>
+<item>
+<title>Gautam Adani's Wealth Almost Halved by Stock-Price Plunge</title>
+<link>https://www.wsj.com/articles/gautam-adanis-wealth-almost-halved-by-stock-price-plunge-11675430439?mod=rss_markets_main</link>
+<description><![CDATA[The Indian industrialist’s net worth has declined by $58 billion since the publication of a report by a U.S. short seller.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 13:09:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000549404</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Markets Main</wsj:articletype>
+</item>
+<item>
+<title>Jobs Market Parties Like It's 1969</title>
+<link>https://www.wsj.com/articles/jobs-market-parties-like-its-1969-11675443737?mod=rss_markets_main</link>
+<description><![CDATA[A blowout employment report doesn’t jibe with layoff announcements at tech companies, but the overall labor picture is a lot more buoyant.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 12:02:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000550316</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Heard on the Street</wsj:articletype>
+</item>
+<item>
+<title>Why It Pays for Investors to Consult With Friends and Family</title>
+<link>https://www.wsj.com/articles/investment-financial-advice-study-11675370098?mod=rss_markets_main</link>
+<description><![CDATA[A study finds that investors who only get advice from a financial adviser—or from nobody—are more likely to suffer from overconfidence.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 12:00:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000524481</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Journal Reports: Investing Monthly</wsj:articletype>
+</item>
+<item>
+<title>'Green' Funds Cost Three Times More Than You Think</title>
+<link>https://www.wsj.com/articles/esg-green-funds-cost-three-times-more-than-you-think-11675441245?mod=rss_markets_main</link>
+<description><![CDATA[Buying an ESG fund is a lot like buying in an index fund. That means investors are paying a lot for the small part that is different.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 11:21:00 -0500</pubDate>
+<guid isPermaLink="false">SB10265378329129654090104589419493272524448</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>The Intelligent Investor</wsj:articletype>
+</item>
+<item>
+<title>DEI Announcements Help the Stocks of Some Companies---but Not in Tech</title>
+<link>https://www.wsj.com/articles/diversity-stock-price-tech-11675370825?mod=rss_markets_main</link>
+<description><![CDATA[Overall, manufacturing firms that announced DEI initiatives drew a positive response from investors.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 10:00:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000496973</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Journal Reports: Investing Monthly</wsj:articletype>
+</item>
+<item>
+<title>Ryan Cohen Buys Nordstrom Stake</title>
+<link>https://www.wsj.com/articles/ryan-cohen-takes-stake-in-nordstrom-11675382489?mod=rss_markets_main</link>
+<description><![CDATA[The activist investor plans to urge Nordstrom to refresh its board and replace the former CEO of Bed Bath &amp; Beyond as a director.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 08:45:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000547569</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Finance</wsj:articletype>
+</item>
+<item>
+<title>Travel Stocks Soar After Pandemic Struggles</title>
+<link>https://www.wsj.com/articles/travel-stocks-soar-after-pandemic-struggles-11675399454?mod=rss_markets_main</link>
+<description><![CDATA[High customer demand and strong industry pricing power are fueling big gains for shares of airlines, hotels and cruise lines.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 08:00:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000546759</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Stocks</wsj:articletype>
+</item>
+<item>
+<title>India Embraces Budgetary Caution</title>
+<link>https://www.wsj.com/articles/india-embraces-budgetary-cautionand-infrastructure-11675427520?mod=rss_markets_main</link>
+<description><![CDATA[A year away from national elections, New Delhi is resisting the urge to splurge on subsidies. Instead, the new budget envisions an all-out infrastructure push.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 07:32:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000549278</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Heard on the Street</wsj:articletype>
+</item>
+<item>
+<title>SEC Considers Easing Climate-Disclosure Rules</title>
+<link>https://www.wsj.com/articles/sec-considers-easing-climate-disclosure-rules-after-investor-pushback-11675416111?mod=rss_markets_main</link>
+<description><![CDATA[The potential changes come after pushback from investors, companies and lawmakers.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 07:30:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000547045</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Financial Regulation</wsj:articletype>
+</item>
+<item>
+<title>Ford's Profit Engine Needs a Full Overhaul</title>
+<link>https://www.wsj.com/articles/fords-profit-engine-needs-a-full-overhaul-11675426722?mod=rss_markets_main</link>
+<description><![CDATA[The company is starting to come clean about its flabby manufacturing and inefficient engineering.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 07:18:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000549258</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Heard on the Street</wsj:articletype>
+</item>
+<item>
+<title>Europe Cuts Addiction to Russian Energy, as It Hustles for Supplies</title>
+<link>https://www.wsj.com/articles/europe-cuts-addiction-to-russian-energy-yet-fuel-scramble-continues-11675421544?mod=rss_markets_main</link>
+<description><![CDATA[Europe’s dependence on Russian energy is drawing to a close, leaving the continent racing to squirrel away fuels and find alternative supplies.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 05:52:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000545565</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Oil Markets</wsj:articletype>
+</item>
+<item>
+<title>Bitcoin Prices Rally as Larger Traders Take Charge</title>
+<link>https://www.wsj.com/articles/bitcoin-prices-rally-as-larger-traders-take-charge-11675419129?mod=rss_markets_main</link>
+<description><![CDATA[Hedge funds and other institutional investors appear to be powering a recovery in the cryptocurrency, a market previously dominated by individual investors.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 05:30:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000546337</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Crypto</wsj:articletype>
+</item>
+<item>
+<title>Mark Cuban and Amazon Are Shaking Up Generic Drugs</title>
+<link>https://www.wsj.com/articles/mark-cuban-and-amazon-are-shaking-up-generic-drugs-11675370270?mod=rss_markets_main</link>
+<description><![CDATA[Lower-cost options are starting to put pressure on middlemen who profit from an opaque business model.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 05:30:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000546670</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Heard on the Street</wsj:articletype>
+</item>
+<item>
+<title>Market Tanked, but Americans Kept Piling Into 401(k)s</title>
+<link>https://www.wsj.com/articles/the-market-tanked-but-americans-kept-piling-money-into-their-401-k-s-11675393005?mod=rss_markets_main</link>
+<description><![CDATA[Most investors kept up their savings rate in 2022 and resisted trading their retirement funds, Vanguard data show.]]></description>
+<content:encoded/>
+<pubDate>Fri, 03 Feb 2023 05:30:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000547664</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Personal Finance</wsj:articletype>
+</item>
+<item>
+<title>Big Tech Didn't Quite Clear the Bar</title>
+<link>https://www.wsj.com/articles/big-tech-didnt-quite-clear-the-bar-11675385803?mod=rss_markets_main</link>
+<description><![CDATA[Results from Apple, Amazon and Google proved to be disappointing and indicate that a tough year is still ahead for the tech giants.]]></description>
+<content:encoded/>
+<pubDate>Thu, 02 Feb 2023 19:56:00 -0500</pubDate>
+<guid isPermaLink="false">WP-WSJ-0000548243</guid>
+<category domain="AccessClassName">PAID</category>
+<wsj:articletype>Heard on the Street</wsj:articletype>
+</item>
+</channel>
+</rss>
