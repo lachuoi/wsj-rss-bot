@@ -1,35 +1,36 @@
-export RUST_LOG := "spin-trace"
+# Default task
+default: help
 
-# Set the default recipe
-default:
-    just test
-    cargo build --release
+# Show available tasks
+help:
+    @just --list
 
-# Run linting and unit tests
-test:
-    just lint
-    just test-unit
+# Check the project for errors
+check:
+    cargo component check --target wasm32-wasip2
 
-# Lint the codebase
-lint:
-    cargo clippy --all-features -- -D warnings
-    cargo fmt -- --check
+# Build the WebAssembly component
+build flags="":
+    cargo component build --target wasm32-wasip2 {{flags}}
 
-# Run unit tests with dynamic target
-test-unit:
-    RUST_LOG=${RUST_LOG} cargo test --target=`rustc -vV | sed -n 's|host: ||p'`
+# Build the component in release mode
+build-release: (build "--release")
 
-release:
-    #!/usr/bin/env fish
-    set this_version (grep '^version =' spin.toml | sed -E 's/version = "(.*)"/\1/')
-    git tag v$this_version
-    git push origin v$this_version
-    set -e this_version
+# Clean the build artifacts
+clean:
+    cargo clean
 
-up:
-    #!/usr/bin/env fish
-    for line in (cat ../../.env | grep -v '^#' | grep -v '^[[:space:]]*$')
-        set item (string split -m 1 '=' $line)
-        set -gx $item[1] $item[2]
-    end
-    spin up --build --runtime-config-file ../../runtime-config.dev.toml
+# Run the project
+run flags="": (build flags)
+    @wasmtime run \
+        -S http \
+        -S inherit-network=y \
+        -S allow-ip-name-lookup=y \
+        -S inherit-env=y \
+        ./target/wasm32-wasip2/$(if [ "{{flags}}" == "--release" ]; then echo "release"; else echo "debug"; fi)/mstd-wsj-rss.wasm
+
+
+
+
+# Run the project in release mode
+run-release: (run "--release")
