@@ -1,3 +1,5 @@
+set dotenv-load := true
+
 # Default task
 default: help
 
@@ -8,6 +10,14 @@ help:
 # Check the project for errors
 check:
     cargo component check --target wasm32-wasip2
+
+# Format the code
+fmt:
+    cargo fmt
+
+# Lint the code
+lint:
+    cargo clippy --target wasm32-wasip2 -- -D warnings
 
 # Build the WebAssembly component
 build flags="":
@@ -29,8 +39,9 @@ run flags="": (build flags)
         -S inherit-env=y \
         ./target/wasm32-wasip2/$(if [ "{{flags}}" == "--release" ]; then echo "release"; else echo "debug"; fi)/mstd-wsj-rss.wasm
 
-
-
-
 # Run the project in release mode
 run-release: (run "--release")
+
+# Build the container image
+image-build:
+    podman build -t mstd-wsj-rss .

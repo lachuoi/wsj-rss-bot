@@ -24,59 +24,53 @@ const DB_KEY_PREFIX: &str = "wsj-rss";
 fn main() -> Result<()> {
     println!("WSJ RSS starting");
 
-    futures::executor::block_on(async {
-        let feeds_url = "https://raw.githubusercontent.com/lachuoi/lachuoi/refs/heads/legacy-gpl-version/assets/wsj-news-feeds.hjson";
-        let response_body = match http_request(
-            bindings::http::types::Method::Get,
-            feeds_url,
-            vec![],
-            None,
-        )
-        .await
-        {
-            Ok(body) => body,
-            Err(e) => {
-                eprintln!("Failed to fetch feeds: {:?}", e);
-                return;
-            }
-        };
-        let response_str = match str::from_utf8(&response_body) {
-            Ok(s) => s,
-            Err(e) => {
-                eprintln!("Failed to parse feeds body: {:?}", e);
-                return;
-            }
-        };
-        let wsj_rss_feeds: Value = match serde_hjson::from_str(response_str) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!("Failed to parse HJSON: {:?}", e);
-                return;
-            }
-        };
+    let feeds_url = "https://raw.githubusercontent.com/lachuoi/lachuoi/refs/heads/legacy-gpl-version/assets/wsj-news-feeds.hjson";
+    let response_body = match http_request(
+        bindings::http::types::Method::Get,
+        feeds_url,
+        vec![],
+        None,
+    ) {
+        Ok(body) => body,
+        Err(e) => {
+            eprintln!("Failed to fetch feeds: {:?}", e);
+            return Ok(());
+        }
+    };
+    let response_str = match str::from_utf8(&response_body) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Failed to parse feeds body: {:?}", e);
+            return Ok(());
+        }
+    };
+    let wsj_rss_feeds: Value = match serde_hjson::from_str(response_str) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("Failed to parse HJSON: {:?}", e);
+            return Ok(());
+        }
+    };
 
-        if let Some(feeds) = wsj_rss_feeds.as_array() {
-            for feed in feeds {
-                if let (Some(name), Some(url)) = (
-                    feed.get("name").and_then(Value::as_str),
-                    feed.get("url").and_then(Value::as_str),
-                ) {
-                    if let Err(e) =
-                        rss_eater(name.to_string(), url.to_string()).await
-                    {
-                        eprintln!("Error processing feed {}: {:?}", name, e);
-                    }
+    if let Some(feeds) = wsj_rss_feeds.as_array() {
+        for feed in feeds {
+            if let (Some(name), Some(url)) = (
+                feed.get("name").and_then(Value::as_str),
+                feed.get("url").and_then(Value::as_str),
+            ) {
+                if let Err(e) = rss_eater(name.to_string(), url.to_string()) {
+                    eprintln!("Error processing feed {}: {:?}", name, e);
                 }
             }
         }
-    });
+    }
 
     println!("WSJ RSS finished");
     Ok(())
 }
 
-async fn rss_eater(name: String, url: String) -> Result<()> {
-    let channel = get_rss(url).await?;
+fn rss_eater(name: String, url: String) -> Result<()> {
+    let channel = get_rss(url)?;
 
     let rss_last_build_date = match channel.last_build_date() {
         Some(date_str) => {
@@ -86,28 +80,27 @@ async fn rss_eater(name: String, url: String) -> Result<()> {
     };
 
     let recorded_last_build_date =
-        last_build_date(&name, rss_last_build_date).await?;
+        last_build_date(&name, rss_last_build_date)?;
 
     if rss_last_build_date > recorded_last_build_date {
         let new_items =
-            get_new_items(&channel, recorded_last_build_date).await?;
-        post_to_mastodon(&name, new_items).await?;
-        update_last_build_date(&name, rss_last_build_date).await?;
+            get_new_items(&channel, recorded_last_build_date)?;
+        post_to_mastodon(&name, new_items)?;
+        update_last_build_date(&name, rss_last_build_date)?;
     } else {
-        update_last_build_date(&name, rss_last_build_date).await?;
+        update_last_build_date(&name, rss_last_build_date)?;
     }
 
     Ok(())
 }
 
-async fn get_rss(rss_uri: String) -> Result<Channel> {
+fn get_rss(rss_uri: String) -> Result<Channel> {
     let body = http_request(
         bindings::http::types::Method::Get,
         &rss_uri,
         vec![],
         None,
-    )
-    .await?;
+    )?;
     let channel = Channel::read_from(&body[..])?;
     Ok(channel)
 }
@@ -128,14 +121,14 @@ fn parse_rss_date(s: &str) -> Option<DateTime<Utc>> {
     None
 }
 
-async fn last_build_date(
+fn last_build_date(
     name: &String,
     current_rss_dt: DateTime<Utc>,
 ) -> Result<DateTime<Utc>> {
     let camel_name = name.to_case(Case::Camel);
     let db_key = format!("{}.{}.last_build_date", DB_KEY_PREFIX, camel_name);
 
-    match db::get_kv(&db_key).await? {
+    match db::get_kv(&db_key)? {
         Some(stored_val) => {
             if let Ok(dt) = DateTime::parse_from_rfc3339(&stored_val) {
                 Ok(dt.with_timezone(&Utc))
@@ -153,20 +146,20 @@ async fn last_build_date(
         }
         None => {
             let now = Utc::now();
-            db::set_kv(&db_key, &now.to_rfc3339()).await?;
+            db::set_kv(&db_key, &now.to_rfc3339())?;
             Ok(now)
         }
     }
 }
 
-async fn update_last_build_date(name: &String, d: DateTime<Utc>) -> Result<()> {
+fn update_last_build_date(name: &String, d: DateTime<Utc>) -> Result<()> {
     let camel_name = name.to_case(Case::Camel);
     let db_key = format!("{}.{}.last_build_date", DB_KEY_PREFIX, camel_name);
-    db::set_kv(&db_key, &d.to_rfc3339()).await?;
+    db::set_kv(&db_key, &d.to_rfc3339())?;
     Ok(())
 }
 
-async fn get_new_items(
+fn get_new_items(
     channel: &Channel,
     recorded_last_build_date: DateTime<Utc>,
 ) -> Result<Vec<Item>> {
@@ -184,7 +177,7 @@ async fn get_new_items(
     Ok(new_items)
 }
 
-async fn post_to_mastodon(name: &String, msgs: Vec<Item>) -> Result<()> {
+fn post_to_mastodon(name: &String, msgs: Vec<Item>) -> Result<()> {
     let mstd_api_uri = env::var("MSTD_API_URI").expect("MSTD_API_URI not set");
     let mstd_access_token =
         env::var("MSTD_ACCESS_TOKEN").expect("MSTD_ACCESS_TOKEN not set");
@@ -236,8 +229,7 @@ async fn post_to_mastodon(name: &String, msgs: Vec<Item>) -> Result<()> {
             &url,
             headers,
             Some(body),
-        )
-        .await?;
+        )?;
 
         println!("WSJ {} published: {}", name, item.title.unwrap_or_default());
     }

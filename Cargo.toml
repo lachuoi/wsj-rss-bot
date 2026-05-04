@@ -1,5 +1,5 @@
 [package]
-name = "mstd-wsj-rss"
+name = "wsj-rss-bot"
 authors = ["Seungjin Kim <seungjin@duck.com>"]
 description = "WSI RSS bot for Mastodon"
 version = "0.0.1"
@@ -17,7 +17,6 @@ convert_case = "0.8.0"
 serde = { version = "1.0.219", features = ["derive"] }
 serde-hjson = "1.1.0"
 wasi = "0.13.1"
-futures = "0.3"
 url = "2.5.4"
 log = "0.4"
 html2text = "0.17.1"

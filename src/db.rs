@@ -42,7 +42,7 @@ struct PipelineResponse {
     results: Vec<serde_json::Value>,
 }
 
-async fn execute_sql(
+fn execute_sql(
     sql: String,
     args: Vec<Value>,
 ) -> Result<serde_json::Value> {
@@ -92,8 +92,7 @@ async fn execute_sql(
         &full_url,
         headers,
         Some(body),
-    )
-    .await?;
+    )?;
 
     let resp: PipelineResponse = serde_json::from_slice(&resp_body)?;
     let result = resp
@@ -111,7 +110,7 @@ async fn execute_sql(
     Ok(response.clone())
 }
 
-pub async fn get_kv(key: &str) -> Result<Option<String>> {
+pub fn get_kv(key: &str) -> Result<Option<String>> {
     let table_name_raw = env::var("TURSO_KV_TABLE").unwrap_or_else(|_| "lachuoi_kv_store".to_string());
     let table_name = table_name_raw.trim();
     let table_name = if table_name.is_empty() { "lachuoi_kv_store" } else { table_name };
@@ -120,8 +119,7 @@ pub async fn get_kv(key: &str) -> Result<Option<String>> {
     let _ = execute_sql(
         format!("CREATE TABLE IF NOT EXISTS {} (key TEXT PRIMARY KEY, value TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)", table_name),
         vec![],
-    )
-    .await?;
+    )?;
 
     let resp = execute_sql(
         format!("SELECT value FROM {} WHERE key = ?", table_name),
@@ -129,8 +127,7 @@ pub async fn get_kv(key: &str) -> Result<Option<String>> {
             value_type: "text".to_string(),
             value: key.to_string(),
         }],
-    )
-    .await?;
+    )?;
 
     // Try multiple pointers as Turso API versions vary
     let val = resp.pointer("/result/rows/0/0/value")
@@ -143,7 +140,7 @@ pub async fn get_kv(key: &str) -> Result<Option<String>> {
     }
 }
 
-pub async fn set_kv(key: &str, value: &str) -> Result<()> {
+pub fn set_kv(key: &str, value: &str) -> Result<()> {
     let table_name_raw = env::var("TURSO_KV_TABLE").unwrap_or_else(|_| "lachuoi_kv_store".to_string());
     let table_name = table_name_raw.trim();
     let table_name = if table_name.is_empty() { "lachuoi_kv_store" } else { table_name };
@@ -152,8 +149,7 @@ pub async fn set_kv(key: &str, value: &str) -> Result<()> {
     let _ = execute_sql(
         format!("CREATE TABLE IF NOT EXISTS {} (key TEXT PRIMARY KEY, value TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)", table_name),
         vec![],
-    )
-    .await?;
+    )?;
 
     execute_sql(
         format!("INSERT INTO {} (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP", table_name),
@@ -167,8 +163,7 @@ pub async fn set_kv(key: &str, value: &str) -> Result<()> {
                 value: value.to_string(),
             },
         ],
-    )
-    .await?;
+    )?;
     
     Ok(())
 }
