@@ -14,12 +14,19 @@ use chrono::{self, DateTime, NaiveDateTime, Utc};
 use convert_case::{Case, Casing};
 use rss::{Channel, Item};
 use serde_json::Value;
+use std::collections::HashSet;
 use std::env;
 use std::str::{self};
 use wasi as bindings;
 use wasi_http::http_request;
 
 const DB_KEY_PREFIX: &str = "wsj-rss";
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+struct PublishedItem {
+    title: String,
+    posted_at: i64, // Unix timestamp
+}
 
 fn main() -> Result<()> {
     println!("WSJ RSS starting");
@@ -82,13 +89,66 @@ fn rss_eater(name: String, url: String) -> Result<()> {
     let recorded_last_build_date =
         last_build_date(&name, rss_last_build_date)?;
 
+    let kv_titles_key = format!("{}.published_titles", DB_KEY_PREFIX);
+    let mut published_items: Vec<PublishedItem> =
+        match db::get_kv(&kv_titles_key)? {
+            Some(json_str) => {
+                serde_json::from_str(&json_str).unwrap_or_default()
+            }
+            _ => Vec::new(),
+        };
+
+    // Cleanup: Remove items older than 7 days
+    let seven_days_ago = Utc::now()
+        .checked_sub_signed(chrono::Duration::days(7))
+        .unwrap()
+        .timestamp();
+    published_items.retain(|item| item.posted_at > seven_days_ago);
+
+    let mut published_titles: HashSet<String> =
+        published_items.iter().map(|i| i.title.clone()).collect();
+    let initial_titles_count = published_titles.len();
+
     if rss_last_build_date > recorded_last_build_date {
-        let new_items =
-            get_new_items(&channel, recorded_last_build_date)?;
-        post_to_mastodon(&name, new_items)?;
+        let new_items = get_new_items(&channel, recorded_last_build_date)?;
+
+        for item in new_items {
+            let title = item.title.clone().unwrap_or_default();
+            if title.is_empty() {
+                continue;
+            }
+
+            if published_titles.contains(&title) {
+                println!(
+                    "WSJ {} - Skipping already posted title: {}",
+                    name, title
+                );
+                continue;
+            }
+
+            if let Err(e) = post_to_mastodon(&name, vec![item.clone()]) {
+                eprintln!("Error posting to Mastodon: {:?}", e);
+                continue;
+            }
+
+            published_items.push(PublishedItem {
+                title: title.clone(),
+                posted_at: Utc::now().timestamp(),
+            });
+            published_titles.insert(title);
+        }
+
         update_last_build_date(&name, rss_last_build_date)?;
     } else {
         update_last_build_date(&name, rss_last_build_date)?;
+    }
+
+    // Save updated titles list back to DB if changed
+    if published_titles.len() != initial_titles_count
+        || published_items.len() < initial_titles_count
+    {
+        let json_str = serde_json::to_string(&published_items)?;
+        db::set_kv(&kv_titles_key, &json_str)?;
     }
 
     Ok(())
