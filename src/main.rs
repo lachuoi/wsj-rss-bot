@@ -38,7 +38,7 @@ fn main() -> Result<()> {
     let response_body = match http_request(
         bindings::http::types::Method::Get,
         feeds_url,
-        vec![],
+        vec![("User-Agent".to_string(), "wsj-rss-bot/0.1.0".to_string().into_bytes())],
         None,
     ) {
         Ok(body) => body,
@@ -141,7 +141,7 @@ fn get_rss(rss_uri: String) -> Result<Channel> {
     let body = http_request(
         bindings::http::types::Method::Get,
         &rss_uri,
-        vec![],
+        vec![("User-Agent".to_string(), "wsj-rss-bot/0.1.0".to_string().into_bytes())],
         None,
     )?;
     let channel = Channel::read_from(&body[..])?;
@@ -264,6 +264,10 @@ fn post_to_mastodon(name: &String, msgs: Vec<Item>, dry_run: bool) -> Result<()>
             (
                 "Content-Type".to_string(),
                 "application/json".to_string().into_bytes(),
+            ),
+            (
+                "User-Agent".to_string(),
+                "wsj-rss-bot/0.1.0".to_string().into_bytes(),
             ),
         ];
 
