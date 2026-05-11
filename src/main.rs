@@ -22,11 +22,13 @@ use wasi_http::http_request;
 
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
-    let dry_run = args.contains(&"--dryrun".to_string()) || env::var("DRY_RUN").map(|v| v == "true").unwrap_or(false);
     let environment = env::var("ENVIRONMENT").unwrap_or_else(|_| "production".to_string());
+    let dry_run = args.contains(&"--dryrun".to_string()) 
+        || env::var("DRY_RUN").map(|v| v == "true").unwrap_or(false)
+        || environment == "development";
     let app_id = env::var("APP_ID").unwrap_or_else(|_| "unknown".to_string());
 
-    if dry_run || environment == "development" {
+    if dry_run {
         println!("WSJ RSS starting (mode: {}, APP_ID: {}, DRY RUN: {})", environment, app_id, dry_run);
     } else {
         println!("WSJ RSS starting (APP_ID: {})", app_id);
