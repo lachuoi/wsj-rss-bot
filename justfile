@@ -38,7 +38,7 @@ run flags="": (build flags)
         -S allow-ip-name-lookup=y \
         -S inherit-env=y \
         --dir . \
-        ./target/wasm32-wasip2/$(if [ "{{flags}}" == "--release" ]; then echo "release"; else echo "debug"; fi)/mstd-wsj-rss.wasm
+        ./target/wasm32-wasip2/$(if [ "{{flags}}" == "--release" ]; then echo "release"; else echo "debug"; fi)/wsj-rss-bot.wasm
 
 # Run the project in release mode
 run-release: (run "--release")
@@ -51,5 +51,5 @@ dry-run flags="": (build flags)
         -S allow-ip-name-lookup=y \
         -S inherit-env=y \
         --dir . \
-        ./target/wasm32-wasip2/$(if [ "{{flags}}" == "--release" ]; then echo "release"; else echo "debug"; fi)/mstd-wsj-rss.wasm
+        ./target/wasm32-wasip2/$(if [ "{{flags}}" == "--release" ]; then echo "release"; else echo "debug"; fi)/wsj-rss-bot.wasm
 
