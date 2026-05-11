@@ -52,14 +52,14 @@ pub fn http_request(
         OutgoingBody::finish(outgoing_body, None).map_err(|_| anyhow::anyhow!("failed to finish body"))?;
     }
 
-    let future_response = handle(request, None).map_err(|e| anyhow::anyhow!("failed to send request: {:?}", e))?;
+    let future_response = handle(request, None).map_err(|e| anyhow::anyhow!("failed to send request to {}: {:?}", url, e))?;
     
     // Poll for the response
     let pollable = future_response.subscribe();
     loop {
         if let Some(result) = future_response.get() {
-            let response = result.map_err(|_| anyhow::anyhow!("request failed"))?
-                .map_err(|_| anyhow::anyhow!("HTTP error"))?;
+            let response = result.map_err(|_| anyhow::anyhow!("request to {} failed (poll error)", url))?
+                .map_err(|e| anyhow::anyhow!("HTTP error for {}: {:?}", url, e))?;
             
             let status = response.status();
             if status < 200 || status >= 300 {
@@ -71,11 +71,11 @@ pub fn http_request(
                         }
                     }
                 }
-                return Err(anyhow::anyhow!("HTTP status {}: {}", status, error_body));
+                return Err(anyhow::anyhow!("HTTP status {} for {}: {}", status, url, error_body));
             }
 
-            let body = response.consume().map_err(|_| anyhow::anyhow!("failed to consume response"))?;
-            let stream = body.stream().map_err(|_| anyhow::anyhow!("failed to get response stream"))?;
+            let body = response.consume().map_err(|_| anyhow::anyhow!("failed to consume response from {}", url))?;
+            let stream = body.stream().map_err(|_| anyhow::anyhow!("failed to get response stream from {}", url))?;
             
             let mut buf = Vec::new();
             loop {
@@ -88,7 +88,7 @@ pub fn http_request(
                         buf.extend_from_slice(&data);
                     }
                     Err(bindings::io::streams::StreamError::Closed) => break,
-                    Err(e) => return Err(anyhow::anyhow!("stream error: {:?}", e)),
+                    Err(e) => return Err(anyhow::anyhow!("stream error for {}: {:?}", url, e)),
                 }
             }
             return Ok(buf);
