@@ -42,10 +42,14 @@ The `wsj-rss-bot` is built as a **WASI P2 (WebAssembly System Interface) Compone
 
 ## 🛡 Design Decisions & Safety
 
-- **Environment Awareness**: If `ENVIRONMENT` is set to `development`, `dry_run` is forced to `true`.
-- **User-Agent Masquerading**: Uses a browser-like `User-Agent` to avoid being blocked by RSS servers.
-- **Deduplication Strategy**: Uses the raw URL as a unique identifier in the `posted link` key list.
-- **2-Hour Limit**: A hard limit ensures that even if the KV store is cleared, the bot won't flood Mastodon with old "re-discovered" articles.
+- **Environment Awareness**: If `ENVIRONMENT` is set to `development`, `dry_run` is forced to `true` to prevent accidental Mastodon posts during testing.
+- **Browser-like Headers**: To avoid being blocked by RSS servers (which often reject generic `WASI-HTTP` or empty `User-Agent` strings), the bot sends a full suite of browser-like headers:
+    - `User-Agent`: `Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0`
+    - `Accept`: `text/html,application/xhtml+xml,application/xml;...`
+    - `Accept-Language`: `en-US,en;q=0.9`
+- **List-based Deduplication**: Leveraging the La Chuoi KV store's ability to store duplicate values for a single key, the bot maintains the entire link history under the `posted link` key. This avoids the overhead of managing thousands of individual keys.
+- **2-Hour Limit**: A hard limit ensures that even if the state is reset, the bot only considers articles from the last 2 hours, preventing historical "spamming".
+- **Async Synchronization**: Although WASI P2 commands are technically synchronous, the bot uses an async-over-sync architecture (via `futures::executor::block_on`) to match the pattern of other bots in the ecosystem (e.g., `newspenguin-rss-bot`), allowing for cleaner IO handling.
 
 ## 🚀 Environment Variables
 
