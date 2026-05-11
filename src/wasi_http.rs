@@ -9,7 +9,7 @@
 use wasi as bindings;
 use anyhow::Result;
 
-pub fn http_request(
+pub async fn http_request(
     method: bindings::http::types::Method,
     url: &str,
     headers: Vec<(String, Vec<u8>)>,

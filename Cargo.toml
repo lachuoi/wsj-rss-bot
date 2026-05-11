@@ -20,6 +20,7 @@ wasi = "0.13.1"
 url = "2.5.4"
 log = "0.4"
 html2text = "0.17.1"
+futures = "0.3"
 
 [package.metadata.component]
 package = "component:mstd-wsj-rss"
