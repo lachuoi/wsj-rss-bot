@@ -14,7 +14,7 @@ use std::fs;
 use std::collections::HashMap;
 use wasi as bindings;
 
-const LOCAL_KV_FILE: &str = "local_kv.json";
+const LOCAL_KV_FILE: &str = "storage.json";
 
 #[derive(Serialize)]
 struct JsonRpcRequest<P> {
