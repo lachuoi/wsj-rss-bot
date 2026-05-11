@@ -13,157 +13,128 @@ use std::env;
 use wasi as bindings;
 
 #[derive(Serialize)]
-struct Value {
-    #[serde(rename = "type")]
-    value_type: String,
+struct JsonRpcRequest<P> {
+    jsonrpc: String,
+    method: String,
+    params: P,
+    id: i64,
+}
+
+#[derive(Serialize)]
+struct KvSetParams {
+    token: String,
+    task_id: i64,
+    key: String,
     value: String,
 }
 
 #[derive(Serialize)]
-struct Stmt {
-    sql: String,
-    args: Vec<Value>,
-}
-
-#[derive(Serialize)]
-struct Request {
-    #[serde(rename = "type")]
-    req_type: String,
-    stmt: Stmt,
-}
-
-#[derive(Serialize)]
-struct Pipeline {
-    requests: Vec<Request>,
+struct KvGetParams {
+    token: String,
+    task_id: i64,
+    key: String,
 }
 
 #[derive(Deserialize)]
-struct PipelineResponse {
-    results: Vec<serde_json::Value>,
+struct JsonRpcResponse {
+    result: Option<serde_json::Value>,
+    error: Option<serde_json::Value>,
 }
 
-fn execute_sql(
-    sql: String,
-    args: Vec<Value>,
-) -> Result<serde_json::Value> {
-    let url_raw = env::var("TURSO_DATABASE_URL").expect("TURSO_DATABASE_URL not set");
-    let mut url = url_raw.trim().to_string();
-    if url.starts_with("libsql://") {
-        url = url.replace("libsql://", "https://");
-    }
-    if !url.starts_with("http://") && !url.starts_with("https://") {
-        url = format!("https://{}", url);
-    }
-    
-    let token = env::var("TURSO_AUTH_TOKEN").expect("TURSO_AUTH_TOKEN not set");
-    let token = token.trim();
+pub fn get_kv(key: &str) -> Result<Vec<String>> {
+    let endpoint = env::var("RPC_ENDPOINT").map_err(|_| anyhow::anyhow!("RPC_ENDPOINT not set"))?;
+    let token = env::var("LACHUOI_TOKEN").map_err(|_| anyhow::anyhow!("LACHUOI_TOKEN not set"))?;
+    let task_id = env::var("APP_ID")
+        .map_err(|_| anyhow::anyhow!("APP_ID not set"))?
+        .parse::<i64>()
+        .map_err(|_| anyhow::anyhow!("APP_ID must be a number"))?;
 
-    let pipeline = Pipeline {
-        requests: vec![
-            Request {
-                req_type: "execute".to_string(),
-                stmt: Stmt { sql, args },
-            },
-            Request {
-                req_type: "close".to_string(),
-                stmt: Stmt {
-                    sql: "".to_string(),
-                    args: vec![],
-                },
-            },
-        ],
+    let request = JsonRpcRequest {
+        jsonrpc: "2.0".to_string(),
+        method: "get_key".to_string(),
+        params: KvGetParams {
+            token,
+            task_id,
+            key: key.to_string(),
+        },
+        id: 1,
     };
 
-    let body = serde_json::to_vec(&pipeline)?;
+    let body = serde_json::to_vec(&request)?;
     let headers = vec![
-        (
-            "Authorization".to_string(),
-            format!("Bearer {}", token).into_bytes(),
-        ),
-        (
-            "Content-Type".to_string(),
-            "application/json".to_string().into_bytes(),
-        ),
+        ("Content-Type".to_string(), "application/json".to_string().into_bytes()),
     ];
 
-    let full_url = format!("{}/v2/pipeline", url.trim_end_matches('/'));
     let resp_body = http_request(
         bindings::http::types::Method::Post,
-        &full_url,
+        &endpoint,
         headers,
         Some(body),
     )?;
 
-    let resp: PipelineResponse = serde_json::from_slice(&resp_body)?;
-    let result = resp
-        .results
-        .get(0)
-        .ok_or_else(|| anyhow::anyhow!("No results in pipeline response from {}", full_url))?;
-
-    if let Some(error) = result.get("error") {
-        return Err(anyhow::anyhow!("Turso error at {}: {}", full_url, error));
+    let resp: JsonRpcResponse = serde_json::from_slice(&resp_body)?;
+    
+    if let Some(error) = resp.error {
+        return Err(anyhow::anyhow!("JSON-RPC error: {}", error));
     }
 
-    let response = result
-        .get("response")
-        .ok_or_else(|| anyhow::anyhow!("No response in pipeline result from {}", full_url))?;
-    Ok(response.clone())
-}
-
-pub fn get_kv(key: &str) -> Result<Option<String>> {
-    let table_name_raw = env::var("TURSO_KV_TABLE").unwrap_or_else(|_| "lachuoi_kv_store".to_string());
-    let table_name = table_name_raw.trim();
-    let table_name = if table_name.is_empty() { "lachuoi_kv_store" } else { table_name };
-
-    // Ensure table exists
-    let _ = execute_sql(
-        format!("CREATE TABLE IF NOT EXISTS {} (key TEXT PRIMARY KEY, value TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)", table_name),
-        vec![],
-    )?;
-
-    let resp = execute_sql(
-        format!("SELECT value FROM {} WHERE key = ?", table_name),
-        vec![Value {
-            value_type: "text".to_string(),
-            value: key.to_string(),
-        }],
-    )?;
-
-    // Try multiple pointers as Turso API versions vary
-    let val = resp.pointer("/result/rows/0/0/value")
-        .or_else(|| resp.pointer("/result/rows/0/0"));
-    
-    match val {
-        Some(serde_json::Value::String(s)) => Ok(Some(s.clone())),
-        Some(v) => Ok(Some(v.to_string().trim_matches('"').to_string())),
-        _ => Ok(None),
+    match resp.result {
+        Some(serde_json::Value::Array(arr)) => {
+            let mut values = Vec::new();
+            for val in arr {
+                if let Some(s) = val.as_str() {
+                    values.push(s.to_string());
+                } else {
+                    values.push(val.to_string().trim_matches('"').to_string());
+                }
+            }
+            Ok(values)
+        }
+        Some(serde_json::Value::String(s)) => Ok(vec![s]),
+        Some(serde_json::Value::Null) => Ok(vec![]),
+        Some(v) if v.is_null() => Ok(vec![]),
+        Some(v) => Ok(vec![v.to_string().trim_matches('"').to_string()]),
+        None => Ok(vec![]),
     }
 }
 
 pub fn set_kv(key: &str, value: &str) -> Result<()> {
-    let table_name_raw = env::var("TURSO_KV_TABLE").unwrap_or_else(|_| "lachuoi_kv_store".to_string());
-    let table_name = table_name_raw.trim();
-    let table_name = if table_name.is_empty() { "lachuoi_kv_store" } else { table_name };
+    let endpoint = env::var("RPC_ENDPOINT").map_err(|_| anyhow::anyhow!("RPC_ENDPOINT not set"))?;
+    let token = env::var("LACHUOI_TOKEN").map_err(|_| anyhow::anyhow!("LACHUOI_TOKEN not set"))?;
+    let task_id = env::var("APP_ID")
+        .map_err(|_| anyhow::anyhow!("APP_ID not set"))?
+        .parse::<i64>()
+        .map_err(|_| anyhow::anyhow!("APP_ID must be a number"))?;
 
-    // Ensure table exists
-    let _ = execute_sql(
-        format!("CREATE TABLE IF NOT EXISTS {} (key TEXT PRIMARY KEY, value TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)", table_name),
-        vec![],
+    let request = JsonRpcRequest {
+        jsonrpc: "2.0".to_string(),
+        method: "set_key".to_string(),
+        params: KvSetParams {
+            token,
+            task_id,
+            key: key.to_string(),
+            value: value.to_string(),
+        },
+        id: 1,
+    };
+
+    let body = serde_json::to_vec(&request)?;
+    let headers = vec![
+        ("Content-Type".to_string(), "application/json".to_string().into_bytes()),
+    ];
+
+    let resp_body = http_request(
+        bindings::http::types::Method::Post,
+        &endpoint,
+        headers,
+        Some(body),
     )?;
 
-    execute_sql(
-        format!("INSERT INTO {} (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP", table_name),
-        vec![
-            Value {
-                value_type: "text".to_string(),
-                value: key.to_string(),
-            },
-            Value {
-                value_type: "text".to_string(),
-                value: value.to_string(),
-            },
-        ],
-    )?;
+    let resp: JsonRpcResponse = serde_json::from_slice(&resp_body)?;
     
+    if let Some(error) = resp.error {
+        return Err(anyhow::anyhow!("JSON-RPC error: {}", error));
+    }
+
     Ok(())
 }

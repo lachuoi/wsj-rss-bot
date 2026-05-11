@@ -14,22 +14,23 @@ use chrono::{self, DateTime, NaiveDateTime, Utc};
 use convert_case::{Case, Casing};
 use rss::{Channel, Item};
 use serde_json::Value;
-use std::collections::HashSet;
 use std::env;
 use std::str::{self};
 use wasi as bindings;
 use wasi_http::http_request;
 
-const DB_KEY_PREFIX: &str = "wsj-rss";
-
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
-struct PublishedItem {
-    title: String,
-    posted_at: i64, // Unix timestamp
-}
 
 fn main() -> Result<()> {
-    println!("WSJ RSS starting");
+    let args: Vec<String> = env::args().collect();
+    let dry_run = args.contains(&"--dryrun".to_string()) || env::var("DRY_RUN").map(|v| v == "true").unwrap_or(false);
+    let environment = env::var("ENVIRONMENT").unwrap_or_else(|_| "production".to_string());
+    let app_id = env::var("APP_ID").unwrap_or_else(|_| "unknown".to_string());
+
+    if dry_run || environment == "development" {
+        println!("WSJ RSS starting (mode: {}, APP_ID: {}, DRY RUN: {})", environment, app_id, dry_run);
+    } else {
+        println!("WSJ RSS starting (APP_ID: {})", app_id);
+    }
 
     let feeds_url = "https://raw.githubusercontent.com/lachuoi/lachuoi/refs/heads/legacy-gpl-version/assets/wsj-news-feeds.hjson";
     let response_body = match http_request(
@@ -65,7 +66,7 @@ fn main() -> Result<()> {
                 feed.get("name").and_then(Value::as_str),
                 feed.get("url").and_then(Value::as_str),
             ) {
-                if let Err(e) = rss_eater(name.to_string(), url.to_string()) {
+                if let Err(e) = rss_eater(name.to_string(), url.to_string(), dry_run) {
                     eprintln!("Error processing feed {}: {:?}", name, e);
                 }
             }
@@ -76,7 +77,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn rss_eater(name: String, url: String) -> Result<()> {
+fn rss_eater(name: String, url: String, dry_run: bool) -> Result<()> {
     let channel = get_rss(url)?;
 
     let rss_last_build_date = match channel.last_build_date() {
@@ -89,53 +90,40 @@ fn rss_eater(name: String, url: String) -> Result<()> {
     let recorded_last_build_date =
         last_build_date(&name, rss_last_build_date)?;
 
-    let kv_titles_key = format!("{}.published_titles", DB_KEY_PREFIX);
-    let mut published_items: Vec<PublishedItem> =
-        match db::get_kv(&kv_titles_key)? {
-            Some(json_str) => {
-                serde_json::from_str(&json_str).unwrap_or_default()
-            }
-            _ => Vec::new(),
-        };
+    let one_hour_ago = Utc::now() - chrono::Duration::hours(1);
+    let since = if recorded_last_build_date > one_hour_ago {
+        recorded_last_build_date
+    } else {
+        one_hour_ago
+    };
 
-    // Cleanup: Remove items older than 7 days
-    let seven_days_ago = Utc::now()
-        .checked_sub_signed(chrono::Duration::days(7))
-        .unwrap()
-        .timestamp();
-    published_items.retain(|item| item.posted_at > seven_days_ago);
-
-    let mut published_titles: HashSet<String> =
-        published_items.iter().map(|i| i.title.clone()).collect();
-    let initial_titles_count = published_titles.len();
-
-    if rss_last_build_date > recorded_last_build_date {
-        let new_items = get_new_items(&channel, recorded_last_build_date)?;
+    if rss_last_build_date > recorded_last_build_date && rss_last_build_date > one_hour_ago {
+        let new_items = get_new_items(&channel, since)?;
 
         for item in new_items {
-            let title = item.title.clone().unwrap_or_default();
-            if title.is_empty() {
+            let link = item.link.clone().unwrap_or_default();
+            if link.is_empty() {
                 continue;
             }
 
-            if published_titles.contains(&title) {
+            // Check if link was already posted using the KV store
+            // The KV store allows duplicate keys and returns a list of values
+            let posted_links = db::get_kv("posted link")?;
+            if posted_links.contains(&link) {
                 println!(
-                    "WSJ {} - Skipping already posted title: {}",
-                    name, title
+                    "WSJ {} - Skipping already posted link: {}",
+                    name, link
                 );
                 continue;
             }
 
-            if let Err(e) = post_to_mastodon(&name, vec![item.clone()]) {
+            if let Err(e) = post_to_mastodon(&name, vec![item.clone()], dry_run) {
                 eprintln!("Error posting to Mastodon: {:?}", e);
                 continue;
             }
 
-            published_items.push(PublishedItem {
-                title: title.clone(),
-                posted_at: Utc::now().timestamp(),
-            });
-            published_titles.insert(title);
+            // Mark as posted in the KV store using the duplicate key strategy
+            db::set_kv("posted link", &link)?;
         }
 
         update_last_build_date(&name, rss_last_build_date)?;
@@ -143,16 +131,9 @@ fn rss_eater(name: String, url: String) -> Result<()> {
         update_last_build_date(&name, rss_last_build_date)?;
     }
 
-    // Save updated titles list back to DB if changed
-    if published_titles.len() != initial_titles_count
-        || published_items.len() < initial_titles_count
-    {
-        let json_str = serde_json::to_string(&published_items)?;
-        db::set_kv(&kv_titles_key, &json_str)?;
-    }
-
     Ok(())
 }
+
 
 fn get_rss(rss_uri: String) -> Result<Channel> {
     let body = http_request(
@@ -186,16 +167,17 @@ fn last_build_date(
     current_rss_dt: DateTime<Utc>,
 ) -> Result<DateTime<Utc>> {
     let camel_name = name.to_case(Case::Camel);
-    let db_key = format!("{}.{}.last_build_date", DB_KEY_PREFIX, camel_name);
+    let db_key = format!("{}.last_build_date", camel_name);
 
-    match db::get_kv(&db_key)? {
+    let stored_vals = db::get_kv(&db_key)?;
+    match stored_vals.first() {
         Some(stored_val) => {
-            if let Ok(dt) = DateTime::parse_from_rfc3339(&stored_val) {
+            if let Ok(dt) = DateTime::parse_from_rfc3339(stored_val) {
                 Ok(dt.with_timezone(&Utc))
             } else {
                 // Fallback to old format if necessary
                 if let Ok(ndt) = NaiveDateTime::parse_from_str(
-                    &stored_val,
+                    stored_val,
                     "%Y-%m-%d %H:%M:%S",
                 ) {
                     Ok(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
@@ -214,7 +196,7 @@ fn last_build_date(
 
 fn update_last_build_date(name: &String, d: DateTime<Utc>) -> Result<()> {
     let camel_name = name.to_case(Case::Camel);
-    let db_key = format!("{}.{}.last_build_date", DB_KEY_PREFIX, camel_name);
+    let db_key = format!("{}.last_build_date", camel_name);
     db::set_kv(&db_key, &d.to_rfc3339())?;
     Ok(())
 }
@@ -237,17 +219,18 @@ fn get_new_items(
     Ok(new_items)
 }
 
-fn post_to_mastodon(name: &String, msgs: Vec<Item>) -> Result<()> {
-    let mstd_api_uri = env::var("MSTD_API_URI").expect("MSTD_API_URI not set");
+fn post_to_mastodon(name: &String, msgs: Vec<Item>, dry_run: bool) -> Result<()> {
+    let _mstd_api_uri = env::var("MSTD_API_URI").expect("MSTD_API_URI not set");
     let mstd_access_token =
         env::var("MSTD_ACCESS_TOKEN").expect("MSTD_ACCESS_TOKEN not set");
-
+    
     if msgs.is_empty() {
         println!("WSJ {} - Nothing to publish", name);
         return Ok(());
     }
 
     for item in msgs {
+        let title = item.title.clone().unwrap_or_default();
         let description_html = item.description.clone().unwrap_or_default();
         let description = html2text::config::plain()
             .string_from_read(description_html.as_bytes(), 1000)
@@ -257,7 +240,7 @@ fn post_to_mastodon(name: &String, msgs: Vec<Item>) -> Result<()> {
         let msg: String = format!(
             "[{}] {}\n{}\n{} #WSJ\n({})",
             name,
-            item.title.clone().unwrap_or_default(),
+            title,
             description,
             item.link.clone().unwrap_or_default(),
             item.pub_date.clone().unwrap_or_default()
@@ -269,9 +252,9 @@ fn post_to_mastodon(name: &String, msgs: Vec<Item>) -> Result<()> {
             "status": msg,
             "visibility": "public"
         });
-        let body = serde_json::to_vec(&body_json)?;
+        let _body = serde_json::to_vec(&body_json)?;
 
-        let headers = vec![
+        let _headers = vec![
             (
                 "Authorization".to_string(),
                 format!("Bearer {}", mstd_access_token).into_bytes(),
@@ -282,16 +265,23 @@ fn post_to_mastodon(name: &String, msgs: Vec<Item>) -> Result<()> {
             ),
         ];
 
+        if dry_run {
+            println!("WSJ {} [DRY RUN] would have published: {}", name, title);
+            continue;
+        }
+
+        /*
         let url =
-            format!("{}/api/v1/statuses", mstd_api_uri.trim_end_matches('/'));
+            format!("{}/api/v1/statuses", _mstd_api_uri.trim_end_matches('/'));
         http_request(
             bindings::http::types::Method::Post,
             &url,
-            headers,
-            Some(body),
+            _headers,
+            Some(_body),
         )?;
+        */
 
-        println!("WSJ {} published: {}", name, item.title.unwrap_or_default());
+        println!("WSJ {} [DISABLED] would have published: {}", name, title);
     }
 
     Ok(())

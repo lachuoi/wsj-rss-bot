@@ -7,7 +7,8 @@ A Mastodon bot that fetches Wall Street Journal (WSJ) RSS feeds and posts new ar
 - **Multi-feed Support**: Fetches and processes various WSJ news feeds from a remote HJSON configuration.
 - **WASI P2 Command**: Built as a standard WASI component using `wasm32-wasip2`, designed for direct execution in runtimes like `wasmtime`.
 - **Synchronous Architecture**: Uses blocking WASI HTTP and socket calls for a simpler, more robust execution model without the overhead of an async runtime.
-- **Turso Integration**: Uses the Turso (libSQL) HTTP Pipeline API for persistent state management (tracking last-published articles).
+- **La Chuoi Integration**: Uses the La Chuoi JSON-RPC 2.0 interface for persistent state management and task tracking.
+- **Duplicate Key Strategy**: Leverages the runtime's support for duplicate keys to maintain a robust history of posted links.
 - **Mastodon Integration**: Automatically formats and posts new articles to a configured Mastodon account.
 - **HTML to Text**: Converts RSS descriptions to clean text suitable for Mastodon posts.
 
@@ -17,7 +18,7 @@ A Mastodon bot that fetches Wall Street Journal (WSJ) RSS feeds and posts new ar
 - [cargo-component](https://github.com/bytecodealliance/cargo-component)
 - [wasmtime](https://wasmtime.dev/) (>= 22.0 recommended)
 - [just](https://github.com/casey/just) (task runner)
-- A [Turso](https://turso.tech/) database
+- A [La Chuoi](https://github.com/lachuoi/lachuoi) distributed runtime environment
 - A Mastodon account and [Access Token](https://docs.joinmastodon.org/methods/apps/)
 
 ## Setup
@@ -30,11 +31,12 @@ A Mastodon bot that fetches Wall Street Journal (WSJ) RSS feeds and posts new ar
     ```
 
     Required variables:
-    - `TURSO_DATABASE_URL`: Your Turso database URL (e.g., `libsql://db-name.turso.io`).
-    - `TURSO_AUTH_TOKEN`: Your Turso authentication token.
+    - `RPC_ENDPOINT`: The HTTP URI of the La Chuoi JSON-RPC service.
+    - `LACHUOI_TOKEN`: Your one-time authentication token.
+    - `APP_ID`: Your unique numeric task ID.
     - `MSTD_ACCESS_TOKEN`: Your Mastodon application access token.
     - `MSTD_API_URI`: Your Mastodon instance URL (e.g., `https://mastodon.social`).
-    - `TURSO_KV_TABLE`: (Optional) The table name for key-value storage.
+    - `ENVIRONMENT`: (Optional) `production` or `development`.
 
 ## Development Workflow
 

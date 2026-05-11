@@ -42,6 +42,12 @@ run flags="": (build flags)
 # Run the project in release mode
 run-release: (run "--release")
 
-# Build the container image
-image-build:
-    podman build -t mstd-wsj-rss .
+# Run the project in dry-run mode (no Mastodon posts)
+dry-run flags="": (build flags)
+    @DRY_RUN=true wasmtime run \
+        -S http \
+        -S inherit-network=y \
+        -S allow-ip-name-lookup=y \
+        -S inherit-env=y \
+        ./target/wasm32-wasip2/$(if [ "{{flags}}" == "--release" ]; then echo "release"; else echo "debug"; fi)/mstd-wsj-rss.wasm
+
